@@ -1,0 +1,24 @@
+{
+  "name": "auto-role-router",
+  "version": "1.0.0",
+  "description": "Automatically assign expert roles to AI coding assistants based on question domain",
+  "keywords": [
+    "claude-code",
+    "cursor",
+    "ai-assistant",
+    "skill",
+    "agent",
+    "role-assignment",
+    "expert-system"
+  ],
+  "author": "Alex",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AlexPlum405/skills.git"
+  },
+  "bugs": {
+    "url": "https://github.com/<your-username>/auto-role-router/issues"
+  },
+  "homepage": "https://github.com/AlexPlum405/skills/tree/main/auto-role-router#readme"
+}

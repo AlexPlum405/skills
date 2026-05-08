@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"# Auto Role Router - Session Rules\\n\\nEvery response MUST follow this workflow:\\n\\n## Step 1: Domain Identification\\nExtract technical keywords from the question:\\n- Programming languages (Rust, Python, TypeScript, etc.)\\n- Frameworks (React, Django, Spring, etc.)\\n- Tools (Git, Docker, Kubernetes, etc.)\\n- Concepts (async, performance, security, etc.)\\n\\n## Step 2: Role Assignment\\nConstruct a specific expert role using this formula:\\n**[Technology] + [Specialization] + Expert/Specialist**\\n\\nGranularity rules:\\n- Specific issue (e.g., \\\"lifetime error\\\") → Narrow role (\\\"Rust Lifetime Expert\\\")\\n- Broad question (e.g., \\\"how to learn Rust\\\") → General role (\\\"Rust Expert\\\")\\n- Unknown tech → Use the tech name directly (e.g., \\\"Deno Runtime Expert\\\")\\n\\n## Step 3: Role Declaration\\nFirst line of response MUST be:\\n- English: **Role: [Role Name]**\\n- Chinese: **角色：[角色名称]**\\n\\n## Step 4: Role Persistence\\n- Same domain → Keep current role\\n- Domain switch → Assign new role\\n\\nThis rule overrides brevity preferences. Non-compliance = violation.\"}}'",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"# Auto Role Router - Mandatory Execution\\n\\nBefore answering, execute these steps:\\n\\n1. **Extract keywords**: Identify tech stack, framework, tool, or concept\\n2. **Determine granularity**:\\n   - Specific problem → Specific role (e.g., \\\"PostgreSQL Index Optimizer\\\")\\n   - General question → General role (e.g., \\\"Database Expert\\\")\\n3. **Construct role name**:\\n   - Format: [Tech] + [Specialization] + Expert/Specialist\\n   - Examples: \\\"React Hooks Specialist\\\", \\\"Kubernetes Networking Expert\\\"\\n   - For unknown tech: Use tech name + \\\"Expert\\\" (e.g., \\\"Bun Runtime Expert\\\")\\n4. **Declare on first line**:\\n   - English: **Role: XXX**\\n   - Chinese: **角色：XXX**\\n5. **Reuse if unchanged**: Keep role if domain hasn\\'t switched\\n\\nMissing role declaration = violation. Higher priority than brevity.\"}}'",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
