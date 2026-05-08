@@ -1,7 +1,20 @@
+<div align="center">
+
 # Alex's Skills Collection
 
 > **Personal collection of AI assistant skills and configurations**
 > **个人 AI 助手技能和配置集合**
+
+[![GitHub Stars](https://img.shields.io/github/stars/AlexPlum405/skills?style=social)](https://github.com/AlexPlum405/skills/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/AlexPlum405/skills?style=social)](https://github.com/AlexPlum405/skills/network/members)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Skills Count](https://img.shields.io/badge/Skills-1-blue.svg)](#available-skills--可用技能)
+[![Agent Agnostic](https://img.shields.io/badge/Agent-Agnostic-blueviolet)](https://skills.sh)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+</div>
+
+---
 
 This repository contains custom skills and configurations for AI coding assistants like Claude Code, Cursor, and others.
 

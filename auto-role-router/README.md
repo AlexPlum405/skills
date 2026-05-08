@@ -1,10 +1,20 @@
+<div align="center">
+
 # Auto Role Router
 
 > **Hooks configuration for automatic expert role assignment in AI coding assistants**
 > **AI 编程助手的自动专家角色分配 Hooks 配置**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Agent-Agnostic](https://img.shields.io/badge/Agent-Agnostic-blueviolet)](https://skills.sh)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Agent Agnostic](https://img.shields.io/badge/Agent-Agnostic-blueviolet)](https://skills.sh)
+[![Version](https://img.shields.io/badge/Version-1.0.0-blue.svg)](CHANGELOG.md)
+[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux-lightgrey.svg)](#compatibility--兼容性)
+
+[Features](#why-use-it--为什么使用) • [Installation](#installation--安装) • [Documentation](SKILL.md) • [Comparison](COMPARISON.md)
+
+</div>
+
+---
 
 ## What is this? / 这是什么？
 
