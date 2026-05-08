@@ -1,14 +1,15 @@
+<sub>🌐 <a href="README.en.md">English</a> · <b>中文</b></sub>
+
 <div align="center">
 
-# Alex's Skills Collection
+# Alex 的技能合集
 
-> **Personal collection of AI assistant skills and configurations**
-> **个人 AI 助手技能和配置集合**
+> **AI 编程助手的自定义技能与配置**
 
 [![GitHub Stars](https://img.shields.io/github/stars/AlexPlum405/skills?style=social)](https://github.com/AlexPlum405/skills/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/AlexPlum405/skills?style=social)](https://github.com/AlexPlum405/skills/network/members)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Skills Count](https://img.shields.io/badge/Skills-1-blue.svg)](#available-skills--可用技能)
+[![Skills Count](https://img.shields.io/badge/Skills-1-blue.svg)](#可用技能)
 [![Agent Agnostic](https://img.shields.io/badge/Agent-Agnostic-blueviolet)](https://skills.sh)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -16,61 +17,57 @@
 
 ---
 
-This repository contains custom skills and configurations for AI coding assistants like Claude Code, Cursor, and others.
+这个仓库收录我为 Claude Code、Cursor 等 AI 编程助手打造的自定义技能和配置。每个 skill 独立目录、独立文档、一键安装。
 
-这个仓库包含用于 Claude Code、Cursor 等 AI 编程助手的自定义技能和配置。
-
-## Available Skills / 可用技能
+## 可用技能
 
 ### [auto-role-router](./auto-role-router)
 
-Automatically assigns expert roles to AI assistants based on question domain. Uses dynamic role generation to work with any technology stack.
+根据问题领域自动为 AI 助手分配专家角色。使用**动态角色生成**，适用于任何技术栈——包括尚不存在的新框架。
 
-根据问题领域自动为 AI 助手分配专家角色。使用动态角色生成，适用于任何技术栈。
+**特性：**
+- ✅ 动态角色生成（无需维护角色库）
+- ✅ 两个版本：基础版 + 预激活模式（方案 A）
+- ✅ 跨平台兼容
+- ✅ 面向未来（自动适配新技术）
 
-**Features / 特性:**
-- ✅ Dynamic role generation (no fixed role library)
-- ✅ Two versions: Basic and Pre-activation mode
-- ✅ Cross-platform compatible
-- ✅ Future-proof (works with new technologies)
-
-**Installation / 安装:**
+**快速安装：**
 ```bash
-# Basic version
 curl -sL https://raw.githubusercontent.com/AlexPlum405/skills/main/auto-role-router/install.sh | bash
-
-# Or clone and install manually
-git clone https://github.com/AlexPlum405/skills.git
-cd skills/auto-role-router
-# Follow README instructions
 ```
 
----
-
-## How to use / 如何使用
-
-Each skill has its own directory with:
-- `SKILL.md` - Detailed documentation
-- `README.md` - Quick start guide
-- Installation scripts and configuration files
-
-每个 skill 都有自己的目录，包含：
-- `SKILL.md` - 详细文档
-- `README.md` - 快速入门指南
-- 安装脚本和配置文件
-
-## Contributing / 贡献
-
-This is a personal collection, but suggestions and improvements are welcome!
-
-这是个人集合，但欢迎建议和改进！
-
-## License / 许可证
-
-Each skill may have its own license. Check individual skill directories for details.
-
-每个 skill 可能有自己的许可证。查看各个 skill 目录了解详情。
+详见 [auto-role-router/README.md](./auto-role-router/README.md)。
 
 ---
+
+## 目录结构
+
+每个 skill 独立一个子目录：
+
+```
+skills/
+├── README.md              # 仓库总览（中文）
+├── README.en.md           # 仓库总览（英文）
+├── SKILL_TEMPLATE.md      # 新 skill 模板
+└── skill-name/            # 每个 skill 一个目录
+    ├── SKILL.md           # 详细文档
+    ├── README.md          # 快速入门
+    ├── install.sh         # 安装脚本
+    └── ...
+```
+
+## 贡献
+
+这是个人合集，但欢迎建议和改进。如果你想添加新 skill，可以参考 [SKILL_TEMPLATE.md](./SKILL_TEMPLATE.md)。
+
+## 许可证
+
+每个 skill 可能有自己的许可证，详见各子目录。仓库整体使用 MIT。
+
+---
+
+<div align="center">
 
 **Made with ❤️ by Alex**
+
+</div>
