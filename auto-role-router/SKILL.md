@@ -261,6 +261,23 @@ Ask broader questions:
 - ❌ "这个 Rust 宏的语法是什么？"
 - ✅ "Rust 宏怎么学？"
 
+### Every turn is blocked with `unexpected EOF` / 每轮都被拦截报 `unexpected EOF`
+
+If you see `UserPromptSubmit operation blocked by hook: ... unexpected EOF while looking for matching "'"`, your hook command contains an English apostrophe (`'`) inside the bash single-quoted `printf` payload. Bash treats the apostrophe as the end of the quoted string and fails.
+
+**Fix:** Open `~/.claude/settings.json` and rewrite any `hasn't` / `don't` / `it's` / `expert's` inside the hook command as `has not` / `do not` / `it is` / `the ... of the expert`. Then restart Claude Code.
+
+**Verify before committing a hook:**
+```bash
+# Extract and execute the hook command
+cmd=$(jq -r '.hooks.UserPromptSubmit[0].hooks[0].command' ~/.claude/settings.json)
+bash -c "$cmd" > /dev/null && echo OK || echo BROKEN
+```
+
+如果看到 `UserPromptSubmit operation blocked by hook: ... unexpected EOF` 报错，说明 hook 命令里出现了英文撇号（`'`），它落在 bash 单引号包裹的 `printf` 字符串里会被当作闭合引号，导致 shell 解析失败。
+
+**修法：** 打开 `~/.claude/settings.json`，把 hook 里的 `hasn't` / `don't` / `it's` / `expert's` 改写成 `has not` / `do not` / `it is` / `the ... of the expert`，然后重启 Claude Code。
+
 ---
 
 ## Uninstallation / 卸载

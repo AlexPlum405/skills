@@ -115,6 +115,39 @@ Before submitting a new skill to this repository:
 4. **Version control**: Use semantic versioning in CHANGELOG.md
 5. **Cross-platform**: Test on macOS, Linux, Windows if applicable
 
+## Hook Authoring Gotchas
+
+Claude Code `hooks[].command` is executed via `bash -c`. When the command is `printf '%s' '{...JSON...}'`, the JSON is wrapped in **bash single quotes** — and inside single quotes, bash has no escape mechanism. A single stray apostrophe terminates the string and shell errors with `unexpected EOF while looking for matching "'"`.
+
+**Never put these in hook JSON payloads:**
+
+| ❌ Apostrophe form | ✅ Safe rewrite |
+|--------------------|-----------------|
+| `hasn't`           | `has not`       |
+| `don't`            | `do not`        |
+| `it's`             | `it is`         |
+| `won't`            | `will not`      |
+| `expert's view`    | `the view of the expert` |
+| `you're`           | `you are`       |
+
+**Before committing a hook, always verify:**
+
+```bash
+# 1. grep for backslash-apostrophe in the config
+grep -n "\\\\'" your-hooks-config.json  # must return nothing
+
+# 2. actually execute each hook command through bash
+cmd=$(jq -r '.hooks.UserPromptSubmit[0].hooks[0].command' your-hooks-config.json)
+bash -c "$cmd" > /dev/null && echo "OK" || echo "BROKEN"
+```
+
+If step 2 prints anything containing `EOF` or `unmatched quote`, your hook is broken — users installing it will see every turn blocked.
+
+Other Claude Code hook tips:
+- Keep `timeout` around 10s; hooks run synchronously on every event
+- Return `{"hookSpecificOutput": {...}}` to inject context; anything else is ignored
+- Test both `SessionStart` and `UserPromptSubmit` variants if the skill uses both
+
 ## Example Skills
 
 See existing skills in this repository for reference:
