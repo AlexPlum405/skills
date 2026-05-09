@@ -19,9 +19,9 @@
 
 ## 这是什么
 
-一套 Claude Code hooks 配置：在每次回答前，让 AI **先分析问题所属领域 → 构造最贴切的专家角色 → 带着这个角色去回答**，而不是边答边贴标签。
+一套 Claude Code / Codex hooks 配置：在每次回答前，让 AI **先分析问题所属领域 → 构造最贴切的专家角色 → 带着这个角色去回答**，而不是边答边贴标签。
 
-> **这不是一个可调用的 skill**，是一份装到 `settings.json` 里自动生效的配置。装一次，每轮都跑。
+> **这不是一个普通“调用型 skill”**，而是一份自动生效的 hooks 配置。Claude Code 装到 `~/.claude/settings.json`，Codex 装到 `~/.codex/hooks.json`。装一次，每轮都跑。
 
 **示例：**
 
@@ -47,7 +47,7 @@ AI：**角色：PostgreSQL Query Optimizer**
 
 ## 工作原理
 
-装好后，每条用户消息进入 Claude Code 前会触发 `UserPromptSubmit` hook，向 system context 注入一段强制流程：
+装好后，每条用户消息进入助手前会触发 `UserPromptSubmit` hook，向 system context 注入一段强制流程：
 
 1. 从问题里**提取技术关键词**（语言、框架、工具、概念）
 2. **判断粒度**：具体问题 → 细角色；宽泛问题 → 粗角色
@@ -58,9 +58,63 @@ AI：**角色：PostgreSQL Query Optimizer**
 
 ## 安装
 
+### Codex / Codex Desktop（已实测）
+
+本仓库的 `hooks-config.json` 可直接作为 Codex 全局 hooks 配置使用，事件名仍是 `SessionStart` 和 `UserPromptSubmit`。
+
+clone 后安装：
+
+```bash
+git clone https://github.com/AlexPlum405/skills.git
+cd skills/auto-role-router
+./install.sh --target codex --dry-run
+./install.sh --target codex
+```
+
+如果是本地路径安装：
+
+```bash
+cd /Users/Alex/skills-repo/auto-role-router
+./install.sh --target codex
+```
+
+安装位置：
+
+```bash
+~/.codex/hooks.json
+```
+
+验证建议走真实执行路径：
+
+```bash
+codex exec --skip-git-repo-check -s danger-full-access \
+  -c approval_policy='"never"' \
+  '这个 React Hook 怎么用？请只输出你的第一行，不要解释。' </dev/null
+```
+
+期望能看到：
+
+```text
+hook: SessionStart
+hook: SessionStart Completed
+hook: UserPromptSubmit
+hook: UserPromptSubmit Completed
+角色：React Hooks 专家
+```
+
+如果还想让 Codex 的技能列表里显示这个包，把整个目录同步到：
+
+```bash
+~/.codex/skills/auto-role-router
+```
+
+> 经验点：`codex debug prompt-input` 能确认 skill 是否被发现，但不一定展示 hook 注入内容；验证 hooks 是否真的执行，用 `codex exec` 更可靠。
+
+### Claude Code
+
 > 安装脚本会先把你现有的 `~/.claude/settings.json` 备份到带时间戳的 `.backup` 文件，再合并 hooks。支持 `--dry-run`，想先看改动再落盘。
 
-### macOS / Linux
+#### macOS / Linux
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/AlexPlum405/skills/main/auto-role-router/install.sh | bash
@@ -75,7 +129,7 @@ cd skills/auto-role-router
 ./install.sh              # 确认无误再装
 ```
 
-### Windows（PowerShell）
+#### Windows（PowerShell）
 
 ```powershell
 # 需要 PowerShell 5.1+（Windows 10/11 自带）
@@ -96,6 +150,8 @@ cd skills\auto-role-router
 | 场景 | macOS/Linux | Windows |
 |------|-------------|---------|
 | 预览改动不落盘 | `./install.sh --dry-run` | `.\install.ps1 -DryRun` |
+| 安装到 Codex | `./install.sh --target codex` | 暂不支持 |
+| 安装到 Claude Code | `./install.sh --target claude` | `.\install.ps1` |
 | 彻底卸载（保留别人的 hooks） | `./install.sh --uninstall` | `.\install.ps1 -Uninstall` |
 | 使用更轻量的 legacy 配置 | `./install.sh --legacy` | `.\install.ps1 -Legacy` |
 
@@ -145,8 +201,9 @@ AI：**角色：Redis Caching Specialist**
 | AI 助手 | 状态 |
 |--------|------|
 | Claude Code（CLI/IDE 插件） | ✅ 完整测试并在 CI 中持续验证 |
+| Codex / Codex Desktop | ✅ 本地实测：`~/.codex/hooks.json` + `codex exec` 可触发 `SessionStart` / `UserPromptSubmit` |
 
-> **说明：** 其他助手（Cursor、Codex 等）的 hook 机制各不相同，这个仓库**没有验证过**。如果你测过兼容性并愿意分享步骤，欢迎提 PR。
+> **说明：** 其他助手（Cursor 等）的 hook 机制各不相同，这个仓库暂未验证。如果你测过兼容性并愿意分享步骤，欢迎提 PR。
 
 ## 故障排除
 
@@ -158,9 +215,10 @@ AI：**角色：Redis Caching Specialist**
 
 ### AI 没声明角色
 
-1. `jq .hooks ~/.claude/settings.json` 看 hooks 是否装进去了
-2. 重启 Claude Code（hooks 是在 session 启动时加载的）
-3. 如果 JSON 语法坏了：`jq . ~/.claude/settings.json` 会直接报错行号
+1. Claude Code：`jq .hooks ~/.claude/settings.json` 看 hooks 是否装进去了
+2. Codex：`jq .hooks ~/.codex/hooks.json` 看 hooks 是否装进去了
+3. 重启对应助手（hooks 是在 session 启动时加载的）
+4. Codex 用 `codex exec ...` 看日志里是否出现 `hook: SessionStart` 和 `hook: UserPromptSubmit`
 
 ### 角色太泛化
 

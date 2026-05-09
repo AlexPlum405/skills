@@ -19,9 +19,9 @@
 
 ## What is this
 
-A Claude Code hooks config that runs on every user turn: **analyze domain → construct the most specific expert role → adopt that role before generating the first token**. Not "label the answer with a role after the fact" — actually enter the role first.
+A Claude Code / Codex hooks config that runs on every user turn: **analyze domain → construct the most specific expert role → adopt that role before generating the first token**. Not "label the answer with a role after the fact" — actually enter the role first.
 
-> **This is not a callable skill.** It is a JSON config you merge into `settings.json`. Install once; it runs automatically.
+> **This is not a normal callable skill.** It is an auto-loaded hooks config. Claude Code uses `~/.claude/settings.json`; Codex uses `~/.codex/hooks.json`. Install once; it runs automatically.
 
 **Example:**
 
@@ -58,9 +58,63 @@ Full methodology in [SKILL.md](SKILL.md).
 
 ## Install
 
+### Codex / Codex Desktop (verified)
+
+This package's `hooks-config.json` can be used directly as Codex global hooks config. The event names remain `SessionStart` and `UserPromptSubmit`.
+
+After cloning:
+
+```bash
+git clone https://github.com/AlexPlum405/skills.git
+cd skills/auto-role-router
+./install.sh --target codex --dry-run
+./install.sh --target codex
+```
+
+For a local checkout:
+
+```bash
+cd /Users/Alex/skills-repo/auto-role-router
+./install.sh --target codex
+```
+
+Codex hook location:
+
+```bash
+~/.codex/hooks.json
+```
+
+Validate through the real execution path:
+
+```bash
+codex exec --skip-git-repo-check -s danger-full-access \
+  -c approval_policy='"never"' \
+  '这个 React Hook 怎么用？请只输出你的第一行，不要解释。' </dev/null
+```
+
+Expected evidence:
+
+```text
+hook: SessionStart
+hook: SessionStart Completed
+hook: UserPromptSubmit
+hook: UserPromptSubmit Completed
+角色：React Hooks 专家
+```
+
+If you also want Codex to discover this package as a skill, sync the directory to:
+
+```bash
+~/.codex/skills/auto-role-router
+```
+
+Practical note: `codex debug prompt-input` can confirm the skill list, but may not show hook-injected context. Use `codex exec` to verify hooks actually run.
+
+### Claude Code
+
 > The installer backs up your current `~/.claude/settings.json` (timestamped `.backup` file) before merging hooks. Use `--dry-run` to preview changes first.
 
-### macOS / Linux
+#### macOS / Linux
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/AlexPlum405/skills/main/auto-role-router/install.sh | bash
@@ -75,7 +129,7 @@ cd skills/auto-role-router
 ./install.sh              # apply
 ```
 
-### Windows (PowerShell)
+#### Windows (PowerShell)
 
 ```powershell
 # Requires PowerShell 5.1+ (bundled with Windows 10/11)
@@ -96,6 +150,8 @@ cd skills\auto-role-router
 | Task | macOS/Linux | Windows |
 |------|-------------|---------|
 | Preview without writing | `./install.sh --dry-run` | `.\install.ps1 -DryRun` |
+| Install to Codex | `./install.sh --target codex` | Not supported yet |
+| Install to Claude Code | `./install.sh --target claude` | `.\install.ps1` |
 | Clean uninstall (keeps other hooks) | `./install.sh --uninstall` | `.\install.ps1 -Uninstall` |
 | Lighter "legacy" payload | `./install.sh --legacy` | `.\install.ps1 -Legacy` |
 
@@ -145,8 +201,9 @@ AI:   **Role: Redis Caching Specialist**
 | AI Assistant | Status |
 |--------------|--------|
 | Claude Code (CLI / IDE plugins) | ✅ Fully tested, continuously verified in CI |
+| Codex / Codex Desktop | ✅ Locally verified with `~/.codex/hooks.json` and `codex exec` triggering `SessionStart` / `UserPromptSubmit` |
 
-> **Note:** Hook mechanisms differ across assistants (Cursor, Codex, etc.) and this repo has **not** verified them. If you test compatibility with another assistant and want to contribute install steps, PRs welcome.
+> **Note:** Hook mechanisms differ across assistants (Cursor, etc.) and this repo has not verified them yet. If you test compatibility with another assistant and want to contribute install steps, PRs welcome.
 
 ## Troubleshooting
 
@@ -158,9 +215,10 @@ The CI in this repo guards against this class of bug, so you only hit it if you 
 
 ### AI never declares a role
 
-1. `jq .hooks ~/.claude/settings.json` — confirm the hooks are actually there
-2. Restart Claude Code (hooks load at session start)
-3. If JSON is malformed, `jq . ~/.claude/settings.json` prints the exact line
+1. Claude Code: `jq .hooks ~/.claude/settings.json` — confirm the hooks are actually there
+2. Codex: `jq .hooks ~/.codex/hooks.json` — confirm the hooks are actually there
+3. Restart the target assistant (hooks load at session start)
+4. For Codex, run `codex exec ...` and confirm the logs contain `hook: SessionStart` and `hook: UserPromptSubmit`
 
 ### Role too generic
 

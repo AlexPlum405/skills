@@ -1,10 +1,10 @@
 ---
 name: auto-role-router
 description: >
-  Installation guide and documentation for auto-role-router hooks. Automatically identifies
-  technical domains and assigns appropriate expert roles. Not meant to be invoked as a skill.
-  安装指引和文档，用于配置 auto-role-router hooks。自动识别技术领域并分配专家角色。
-  不需要作为 skill 调用。
+  Install and adapt auto-role-router hooks for Claude Code and Codex. Automatically identifies
+  technical domains and assigns appropriate expert roles via SessionStart and UserPromptSubmit.
+  Use when configuring, validating, or troubleshooting role-routing hooks. 安装和适配
+  auto-role-router hooks，用于 Claude Code / Codex 自动识别技术领域并分配专家角色。
 ---
 
 # Auto Role Router
@@ -12,9 +12,9 @@ description: >
 > **Installation Guide & Documentation**  
 > **安装指引与文档**
 
-This is NOT a callable skill. It's a documentation package for installing auto-role-router hooks into your AI coding assistant.
+This is primarily an installation/adaptation skill. Use it when a user wants auto-role-router installed, ported between assistants, or debugged.
 
-这不是一个可调用的 skill，而是用于在你的 AI 编程助手中安装 auto-role-router hooks 的文档包。
+这主要是一个安装和适配 skill：当用户要安装、迁移或排查 auto-role-router hooks 时使用。
 
 ---
 
@@ -38,26 +38,81 @@ Auto-role-router 让你的 AI 助手自动：
 
 ## Installation / 安装
 
-### Step 1: Locate your settings file / 找到配置文件
+### Codex / Codex Desktop
 
-For Claude Code:
+Codex 0.128.0 has a stable `codex_hooks` feature and accepts the same hook event names used by this package:
+
+- `SessionStart`
+- `UserPromptSubmit`
+
+Use global Codex hooks:
+
+```bash
+~/.codex/hooks.json
+```
+
+Install locally:
+
+```bash
+cd /path/to/auto-role-router
+./install.sh --target codex
+```
+
+Or manually copy the config:
+
+```bash
+mkdir -p ~/.codex
+cp hooks-config.json ~/.codex/hooks.json
+jq . ~/.codex/hooks.json
+```
+
+If the package itself should appear in Codex's skill list, copy the folder into the global skills directory:
+
+```bash
+mkdir -p ~/.codex/skills/auto-role-router
+rsync -a --delete --exclude '.git/' --exclude '.DS_Store' ./ ~/.codex/skills/auto-role-router/
+```
+
+Validate with the real execution path, not only prompt rendering:
+
+```bash
+codex exec --skip-git-repo-check -s danger-full-access \
+  -c approval_policy='"never"' \
+  '这个 React Hook 怎么用？请只输出你的第一行，不要解释。' </dev/null
+```
+
+Expected evidence:
+
+```text
+hook: SessionStart
+hook: SessionStart Completed
+hook: UserPromptSubmit
+hook: UserPromptSubmit Completed
+角色：React Hooks 专家
+```
+
+Note: `codex debug prompt-input` is useful for confirming the skill list, but it may not show hook-injected context. Prefer `codex exec` for hook verification.
+
+### Claude Code
+
+Claude Code uses:
+
 ```bash
 ~/.claude/settings.json
 ```
 
-For other AI assistants, find their equivalent configuration file.
+Install locally:
 
-对于其他 AI 助手，找到它们对应的配置文件。
+```bash
+cd /path/to/auto-role-router
+./install.sh
+```
 
-### Step 2: Add hooks / 添加 hooks
+The installer merges this package's hook entries into existing hooks instead of replacing unrelated hooks.
 
-Open `settings.json` and add the `hooks` section. If you already have hooks, merge them.
+### Manual hook config / 手动配置
 
-打开 `settings.json` 并添加 `hooks` 部分。如果已有 hooks，合并它们。
-
-**Full hooks configuration** (copy from `hooks-config.json` in this repo):
-
-完整 hooks 配置（从本仓库的 `hooks-config.json` 复制）：
+If you are adapting to another assistant with Claude-compatible hooks, copy from `hooks-config.json`:
 
 ```json
 {
@@ -90,7 +145,7 @@ Open `settings.json` and add the `hooks` section. If you already have hooks, mer
 
 ### Step 3: Restart your AI assistant / 重启助手
 
-Restart Claude Code (or your AI assistant) for the hooks to take effect.
+Restart Claude Code, Codex, or the target assistant for hooks to take effect.
 
 重启 Claude Code（或你的 AI 助手）以使 hooks 生效。
 
@@ -101,14 +156,19 @@ macOS / Linux:
 curl -sSL https://raw.githubusercontent.com/AlexPlum405/skills/main/auto-role-router/install.sh | bash
 ```
 
+Codex target after clone:
+```bash
+./install.sh --target codex
+```
+
 Windows (PowerShell 5.1+):
 ```powershell
 irm https://raw.githubusercontent.com/AlexPlum405/skills/main/auto-role-router/install.ps1 | iex
 ```
 
-Both installers back up `settings.json` first, support `--dry-run` / `-DryRun`, and offer a surgical `--uninstall` / `-Uninstall`.
+The macOS/Linux installer backs up the target file first, supports `--target claude|codex`, `--dry-run`, `--legacy`, and `--uninstall`. The PowerShell installer currently targets Claude Code.
 
-两个安装脚本都会先备份 `settings.json`，都支持 `--dry-run` / `-DryRun` 预览，以及精准的 `--uninstall` / `-Uninstall`。
+macOS/Linux 安装脚本会先备份目标文件，支持 `--target claude|codex`、`--dry-run`、`--legacy` 和 `--uninstall`。PowerShell 安装脚本目前面向 Claude Code。
 
 ---
 
@@ -235,13 +295,15 @@ These are examples to illustrate the pattern. The AI will generate roles dynamic
 
 ### AI not declaring roles / AI 不声明角色
 
-1. **Check hooks installation**: Verify `~/.claude/settings.json` has the hooks section
+1. **Check hooks installation**: Verify `~/.claude/settings.json` or `~/.codex/hooks.json` has the hooks section
 2. **Restart**: Restart your AI assistant
-3. **Check syntax**: Ensure JSON is valid (use `jq . ~/.claude/settings.json`)
+3. **Check syntax**: Ensure JSON is valid (use `jq . ~/.claude/settings.json` or `jq . ~/.codex/hooks.json`)
+4. **For Codex**: Run `codex exec` and look for `hook: SessionStart` plus `hook: UserPromptSubmit`
 
-1. **检查 hooks 安装**：验证 `~/.claude/settings.json` 有 hooks 部分
+1. **检查 hooks 安装**：验证 `~/.claude/settings.json` 或 `~/.codex/hooks.json` 有 hooks 部分
 2. **重启**：重启你的 AI 助手
-3. **检查语法**：确保 JSON 有效（使用 `jq . ~/.claude/settings.json`）
+3. **检查语法**：确保 JSON 有效（使用 `jq . ~/.claude/settings.json` 或 `jq . ~/.codex/hooks.json`）
+4. **Codex**：用 `codex exec` 看是否出现 `hook: SessionStart` 和 `hook: UserPromptSubmit`
 
 ### Roles too generic / 角色太泛化
 
@@ -267,18 +329,18 @@ Ask broader questions:
 
 If you see `UserPromptSubmit operation blocked by hook: ... unexpected EOF while looking for matching "'"`, your hook command contains an English apostrophe (`'`) inside the bash single-quoted `printf` payload. Bash treats the apostrophe as the end of the quoted string and fails.
 
-**Fix:** Open `~/.claude/settings.json` and rewrite any `hasn't` / `don't` / `it's` / `expert's` inside the hook command as `has not` / `do not` / `it is` / `the ... of the expert`. Then restart Claude Code.
+**Fix:** Open `~/.claude/settings.json` or `~/.codex/hooks.json` and rewrite any `hasn't` / `don't` / `it's` / `expert's` inside the hook command as `has not` / `do not` / `it is` / `the ... of the expert`. Then restart the target assistant.
 
 **Verify before committing a hook:**
 ```bash
-# Extract and execute the hook command
+# Extract and execute the hook command. Swap in ~/.codex/hooks.json for Codex.
 cmd=$(jq -r '.hooks.UserPromptSubmit[0].hooks[0].command' ~/.claude/settings.json)
 bash -c "$cmd" > /dev/null && echo OK || echo BROKEN
 ```
 
 如果看到 `UserPromptSubmit operation blocked by hook: ... unexpected EOF` 报错，说明 hook 命令里出现了英文撇号（`'`），它落在 bash 单引号包裹的 `printf` 字符串里会被当作闭合引号，导致 shell 解析失败。
 
-**修法：** 打开 `~/.claude/settings.json`，把 hook 里的 `hasn't` / `don't` / `it's` / `expert's` 改写成 `has not` / `do not` / `it is` / `the ... of the expert`，然后重启 Claude Code。
+**修法：** 打开 `~/.claude/settings.json` 或 `~/.codex/hooks.json`，把 hook 里的 `hasn't` / `don't` / `it's` / `expert's` 改写成 `has not` / `do not` / `it is` / `the ... of the expert`，然后重启目标助手。
 
 ---
 
@@ -286,15 +348,21 @@ bash -c "$cmd" > /dev/null && echo OK || echo BROKEN
 
 To remove auto-role-router:
 
-1. Open `~/.claude/settings.json`
-2. Remove the `SessionStart` and `UserPromptSubmit` hooks related to auto-role-router
-3. Restart your AI assistant
+```bash
+./install.sh --target claude --uninstall
+./install.sh --target codex --uninstall
+```
+
+Or manually remove the `SessionStart` and `UserPromptSubmit` entries related to auto-role-router, then restart the target assistant.
 
 要移除 auto-role-router：
 
-1. 打开 `~/.claude/settings.json`
-2. 删除与 auto-role-router 相关的 `SessionStart` 和 `UserPromptSubmit` hooks
-3. 重启你的 AI 助手
+```bash
+./install.sh --target claude --uninstall
+./install.sh --target codex --uninstall
+```
+
+也可以手动删除与 auto-role-router 相关的 `SessionStart` 和 `UserPromptSubmit` entries，然后重启目标助手。
 
 ---
 
@@ -303,10 +371,11 @@ To remove auto-role-router:
 | AI Assistant | Status |
 |--------------|--------|
 | Claude Code (CLI / IDE plugins) | ✅ Fully tested; continuously verified in CI on macOS, Linux, Windows |
+| Codex / Codex Desktop | ✅ Locally verified with `~/.codex/hooks.json`; `codex exec` shows `SessionStart` and `UserPromptSubmit` completion |
 
-> Hook mechanisms differ across other assistants (Cursor, Codex, etc.) and this repo has **not** verified them. If you test compatibility with another assistant and want to contribute install steps, PRs welcome.
+> Hook mechanisms differ across other assistants (Cursor, etc.) and this repo has not verified them yet. If you test compatibility with another assistant and want to contribute install steps, PRs welcome.
 >
-> 其他助手（Cursor、Codex 等）的 hook 机制各不相同，本仓库**没有验证过**。如果你测过兼容性并愿意分享安装步骤，欢迎提 PR。
+> 其他助手（Cursor 等）的 hook 机制各不相同，本仓库暂未验证。如果你测过兼容性并愿意分享安装步骤，欢迎提 PR。
 
 ---
 
