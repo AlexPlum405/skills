@@ -1,0 +1,188 @@
+name: validate-hooks
+
+on:
+  push:
+    paths:
+      - '**/hooks-config*.json'
+      - '**/install.sh'
+      - '**/install.ps1'
+      - '.github/workflows/validate-hooks.yml'
+  pull_request:
+    paths:
+      - '**/hooks-config*.json'
+      - '**/install.sh'
+      - '**/install.ps1'
+
+jobs:
+  hooks-lint:
+    name: Hook config lint (JSON + bash payload)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+
+      - name: Fail on stray backslash-apostrophes inside hook JSON
+        run: |
+          # Catches the exact class of bug we already hit (hasn't, don't, etc.
+          # inside bash single-quoted printf payloads).
+          bad=$(find . -name 'hooks-config*.json' -print0 \
+                | xargs -0 grep -l "\\\\'" || true)
+          if [ -n "$bad" ]; then
+            echo "::error::Apostrophes inside hook payload will break bash -c:"
+            echo "$bad"
+            exit 1
+          fi
+
+      - name: Validate each hooks-config*.json parses as JSON
+        run: |
+          fail=0
+          for f in $(find . -name 'hooks-config*.json'); do
+            if ! jq empty "$f"; then
+              echo "::error file=$f::Invalid JSON"
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - name: Execute every hook command through bash -c
+        # Extracts .hooks[event][*].hooks[*].command and actually runs it.
+        # If any command's quoting is broken, bash will error out here.
+        run: |
+          fail=0
+          for f in $(find . -name 'hooks-config*.json'); do
+            echo "=== $f ==="
+            # Pull every command out, one per line (base64-encoded to survive newlines).
+            jq -r '.hooks // {} | to_entries[] | .value[].hooks[].command | @base64' "$f" \
+              | while read -r cmd_b64; do
+                cmd=$(echo "$cmd_b64" | base64 -d)
+                if ! bash -c "$cmd" >/dev/null 2>err.log; then
+                  echo "::error file=$f::Hook command failed to execute"
+                  cat err.log
+                  fail=1
+                fi
+              done
+          done
+          exit $fail
+
+  installer-smoke-sh:
+    name: install.sh smoke test (bash, Linux + macOS)
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+
+      - name: Install jq (macOS)
+        if: runner.os == 'macOS'
+        run: brew install jq
+
+      - name: install → --uninstall round trip (preserves unrelated hooks)
+        working-directory: auto-role-router
+        run: |
+          set -euo pipefail
+          export HOME="$(mktemp -d)"
+          mkdir -p "$HOME/.claude"
+          # Seed with unrelated hooks under BOTH event types we write to,
+          # plus non-hook keys — installer must preserve all of them.
+          cat > "$HOME/.claude/settings.json" <<'JSON'
+          {
+            "model": "opus",
+            "hooks": {
+              "SessionStart": [{"hooks":[{"type":"command","command":"echo unrelated-session"}]}],
+              "UserPromptSubmit": [{"hooks":[{"type":"command","command":"echo unrelated-user"}]}]
+            }
+          }
+          JSON
+
+          ./install.sh --dry-run
+          ./install.sh
+
+          # Our hook must be present
+          jq -e '.hooks.UserPromptSubmit[].hooks[] | select(.command | contains("[auto-role-router]"))' "$HOME/.claude/settings.json"
+          # Unrelated hooks must still be present
+          jq -e '.hooks.SessionStart[].hooks[]     | select(.command == "echo unrelated-session")' "$HOME/.claude/settings.json"
+          jq -e '.hooks.UserPromptSubmit[].hooks[] | select(.command == "echo unrelated-user")'    "$HOME/.claude/settings.json"
+          # Non-hook keys preserved
+          jq -e '.model == "opus"' "$HOME/.claude/settings.json"
+
+          ./install.sh --uninstall
+
+          # Unrelated hooks still there
+          jq -e '.hooks.SessionStart[].hooks[]     | select(.command == "echo unrelated-session")' "$HOME/.claude/settings.json"
+          jq -e '.hooks.UserPromptSubmit[].hooks[] | select(.command == "echo unrelated-user")'    "$HOME/.claude/settings.json"
+          # Our marker gone
+          if jq -e '.. | objects | .command? // empty | select(contains("[auto-role-router]"))' "$HOME/.claude/settings.json" >/dev/null; then
+            echo "::error::Uninstall left auto-role-router entries behind"
+            exit 1
+          fi
+
+      - name: --legacy variant installs cleanly
+        working-directory: auto-role-router
+        run: |
+          set -euo pipefail
+          export HOME="$(mktemp -d)"
+          mkdir -p "$HOME/.claude"
+          echo '{}' > "$HOME/.claude/settings.json"
+          ./install.sh --legacy
+          jq -e '.hooks.UserPromptSubmit[0].hooks[0].command' "$HOME/.claude/settings.json" >/dev/null
+
+  installer-smoke-ps1:
+    name: install.ps1 smoke test (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install → -Uninstall round trip (preserves unrelated hooks)
+        working-directory: auto-role-router
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tmp = New-Item -ItemType Directory -Path (Join-Path $env:RUNNER_TEMP "home-$([Guid]::NewGuid())")
+          $env:USERPROFILE = $tmp.FullName
+          New-Item -ItemType Directory -Path (Join-Path $tmp.FullName '.claude') | Out-Null
+          $seed = @'
+          {
+            "model": "opus",
+            "hooks": {
+              "SessionStart":     [{"hooks":[{"type":"command","command":"echo unrelated-session"}]}],
+              "UserPromptSubmit": [{"hooks":[{"type":"command","command":"echo unrelated-user"}]}]
+            }
+          }
+          '@
+          $seed | Set-Content -Path (Join-Path $tmp.FullName '.claude\settings.json') -Encoding UTF8
+
+          .\install.ps1 -DryRun
+          .\install.ps1
+
+          $settings = Get-Content -Raw (Join-Path $tmp.FullName '.claude\settings.json') | ConvertFrom-Json
+          if (-not ($settings.hooks.UserPromptSubmit.hooks | Where-Object { $_.command -match '\[auto-role-router\]' })) {
+            throw "Hook not installed"
+          }
+          if (-not ($settings.hooks.SessionStart.hooks | Where-Object { $_.command -eq 'echo unrelated-session' })) {
+            throw "Unrelated SessionStart hook was clobbered by install"
+          }
+          if (-not ($settings.hooks.UserPromptSubmit.hooks | Where-Object { $_.command -eq 'echo unrelated-user' })) {
+            throw "Unrelated UserPromptSubmit hook was clobbered by install"
+          }
+          if ($settings.model -ne 'opus') { throw "Non-hook key was dropped" }
+
+          .\install.ps1 -Uninstall
+
+          $settings = Get-Content -Raw (Join-Path $tmp.FullName '.claude\settings.json') | ConvertFrom-Json
+          if (-not ($settings.hooks.SessionStart.hooks | Where-Object { $_.command -eq 'echo unrelated-session' })) {
+            throw "Uninstall removed unrelated SessionStart hook"
+          }
+          if (-not ($settings.hooks.UserPromptSubmit.hooks | Where-Object { $_.command -eq 'echo unrelated-user' })) {
+            throw "Uninstall removed unrelated UserPromptSubmit hook"
+          }
+          $residue = $settings | ConvertTo-Json -Depth 100
+          if ($residue -match '\[auto-role-router\]') {
+            throw "Uninstall left auto-role-router entries behind"
+          }

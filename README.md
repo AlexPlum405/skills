@@ -2,67 +2,68 @@
 
 <div align="center">
 
-# Alex 的技能合集
+# Alex 的 Claude Code 配置
 
-> **AI 编程助手的自定义技能与配置**
+> **我自己在用的 Claude Code hooks 和 skills，开源出来给有同样需求的人**
 
-[![GitHub Stars](https://img.shields.io/github/stars/AlexPlum405/skills?style=social)](https://github.com/AlexPlum405/skills/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/AlexPlum405/skills?style=social)](https://github.com/AlexPlum405/skills/network/members)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Skills Count](https://img.shields.io/badge/Skills-1-blue.svg)](#可用技能)
-[![Agent Agnostic](https://img.shields.io/badge/Agent-Agnostic-blueviolet)](https://skills.sh)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Skills](https://img.shields.io/badge/skills-1-blue.svg)](#可用技能)
+[![CI](https://img.shields.io/github/actions/workflow/status/AlexPlum405/skills/validate-hooks.yml?label=hooks%20CI)](https://github.com/AlexPlum405/skills/actions/workflows/validate-hooks.yml)
+[![Platform](https://img.shields.io/badge/macOS%20%7C%20Linux%20%7C%20Windows-supported-lightgrey.svg)](#跨平台)
 
 </div>
 
 ---
 
-这个仓库收录我为 Claude Code、Cursor 等 AI 编程助手打造的自定义技能和配置。每个 skill 独立目录、独立文档、一键安装。
+这是我的私人工具仓库 —— 不是一个主动维护的公开项目。代码随便用，issue 和 PR 我**可能**会看，具体见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 可用技能
 
 ### [auto-role-router](./auto-role-router)
 
-根据问题领域自动为 AI 助手分配专家角色。使用**动态角色生成**，适用于任何技术栈——包括尚不存在的新框架。
+给 Claude Code 装两条 hooks，每轮对话让 AI **先分析问题领域 → 构造最贴切的专家角色 → 以该角色生成回答**。不是事后贴标签，是回答第一个 token 就已经在专家模式。
 
-**特性：**
-- ✅ 动态角色生成（无需维护角色库）
-- ✅ 两个版本：基础版 + 预激活模式（方案 A）
-- ✅ 跨平台兼容
-- ✅ 面向未来（自动适配新技术）
-
-**快速安装：**
 ```bash
-curl -sL https://raw.githubusercontent.com/AlexPlum405/skills/main/auto-role-router/install.sh | bash
+# macOS / Linux
+curl -sSL https://raw.githubusercontent.com/AlexPlum405/skills/main/auto-role-router/install.sh | bash
+
+# Windows
+irm https://raw.githubusercontent.com/AlexPlum405/skills/main/auto-role-router/install.ps1 | iex
 ```
 
 详见 [auto-role-router/README.md](./auto-role-router/README.md)。
 
----
+## 跨平台
+
+所有 skill 都会在 CI 中针对以下平台跑冒烟测试：
+
+| 平台 | 安装脚本 |
+|------|---------|
+| macOS | `install.sh` |
+| Linux (Ubuntu) | `install.sh` |
+| Windows 10/11 (PowerShell 5.1+) | `install.ps1` |
 
 ## 目录结构
-
-每个 skill 独立一个子目录：
 
 ```
 skills/
 ├── README.md              # 仓库总览（中文）
 ├── README.en.md           # 仓库总览（英文）
-├── SKILL_TEMPLATE.md      # 新 skill 模板
-└── skill-name/            # 每个 skill 一个目录
-    ├── SKILL.md           # 详细文档
-    ├── README.md          # 快速入门
-    ├── install.sh         # 安装脚本
-    └── ...
+├── SKILL_TEMPLATE.md      # 新 skill 模板（含 hook 编写注意事项）
+├── CONTRIBUTING.md        # 如何贡献
+├── .github/workflows/     # CI：JSON 验证 + hook 执行 + 三平台安装冒烟
+└── skill-name/
+    ├── SKILL.md
+    ├── README.md
+    ├── README.en.md
+    ├── install.sh
+    ├── install.ps1
+    └── hooks-config*.json
 ```
-
-## 贡献
-
-这是个人合集，但欢迎建议和改进。如果你想添加新 skill，可以参考 [SKILL_TEMPLATE.md](./SKILL_TEMPLATE.md)。
 
 ## 许可证
 
-每个 skill 可能有自己的许可证，详见各子目录。仓库整体使用 MIT。
+MIT
 
 ---
 

@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-05-09
+
+### Changed (breaking)
+- **Default installer now installs the pre-activation hook payload** (previously called "Plan A"). The old lighter payload is still available via `install.sh --legacy` / `install.ps1 -Legacy`.
+- `hooks-config-plan-a.json` renamed to `hooks-config.json`; the former `hooks-config.json` is now `hooks-config-legacy.json`.
+
+### Added
+- **Windows installer** (`install.ps1`) with `-DryRun`, `-Legacy`, `-Uninstall`, matching `install.sh` behaviour.
+- **`install.sh`**: `--dry-run` (preview diff), `--uninstall` (surgically remove only our hooks), `--legacy` (lighter payload).
+- **Stable identifier `[auto-role-router]`** embedded in every hook payload; `--uninstall` uses this as a precise marker instead of fuzzy substring matching.
+- **Non-destructive install**: merges into pre-existing hooks instead of replacing arrays. Unrelated SessionStart/UserPromptSubmit hooks are preserved on install and on uninstall.
+- **GitHub Actions CI** (`.github/workflows/validate-hooks.yml`): apostrophe lint, JSON validity, `bash -c` execution of every hook command, plus install/uninstall smoke tests on Ubuntu + macOS + Windows runners, with fixtures that include unrelated hooks and non-hook settings keys.
+- **Demo recording script** (`scripts/record-demo.sh`) using `vhs` for generating a README GIF.
+
+### Removed
+- Compatibility claims for Cursor / Codex / OpenCode / OpenClaw from README and SKILL.md. Only Claude Code is actually tested; unverified claims deleted until someone contributes verification.
+
 ## [1.0.1] - 2026-05-09
 
 ### Fixed

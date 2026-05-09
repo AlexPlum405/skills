@@ -96,17 +96,19 @@ Restart Claude Code (or your AI assistant) for the hooks to take effect.
 
 ### Quick install script / 快速安装脚本
 
+macOS / Linux:
 ```bash
-# Backup your current settings
-cp ~/.claude/settings.json ~/.claude/settings.json.backup
-
-# Download and merge hooks (requires jq)
-curl -sL https://raw.githubusercontent.com/AlexPlum405/skills/main/hooks-config.json | \
-  jq -s '.[0] * .[1]' ~/.claude/settings.json - > ~/.claude/settings.json.tmp && \
-  mv ~/.claude/settings.json.tmp ~/.claude/settings.json
-
-echo "✅ Installed! Restart Claude Code to activate."
+curl -sSL https://raw.githubusercontent.com/AlexPlum405/skills/main/auto-role-router/install.sh | bash
 ```
+
+Windows (PowerShell 5.1+):
+```powershell
+irm https://raw.githubusercontent.com/AlexPlum405/skills/main/auto-role-router/install.ps1 | iex
+```
+
+Both installers back up `settings.json` first, support `--dry-run` / `-DryRun`, and offer a surgical `--uninstall` / `-Uninstall`.
+
+两个安装脚本都会先备份 `settings.json`，都支持 `--dry-run` / `-DryRun` 预览，以及精准的 `--uninstall` / `-Uninstall`。
 
 ---
 
@@ -298,13 +300,13 @@ To remove auto-role-router:
 
 ## Compatibility / 兼容性
 
-| AI Assistant | Status | Notes |
-|--------------|--------|-------|
-| Claude Code | ✅ Tested | Fully tested with hooks |
-| Cursor | ⚠️ Theoretical | Should work if hooks are supported |
-| OpenAI Codex | ⚠️ Theoretical | May need adaptation |
-| OpenCode | ⚠️ Theoretical | May need adaptation |
-| OpenClaw | ⚠️ Theoretical | May need adaptation |
+| AI Assistant | Status |
+|--------------|--------|
+| Claude Code (CLI / IDE plugins) | ✅ Fully tested; continuously verified in CI on macOS, Linux, Windows |
+
+> Hook mechanisms differ across other assistants (Cursor, Codex, etc.) and this repo has **not** verified them. If you test compatibility with another assistant and want to contribute install steps, PRs welcome.
+>
+> 其他助手（Cursor、Codex 等）的 hook 机制各不相同，本仓库**没有验证过**。如果你测过兼容性并愿意分享安装步骤，欢迎提 PR。
 
 ---
 

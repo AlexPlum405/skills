@@ -4,14 +4,14 @@
 
 # Auto Role Router
 
-> **AI 编程助手的自动专家角色分配 Hooks 配置**
+> **让 AI 编程助手在回答前先"进入专家角色"的 hooks 配置**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Agent Agnostic](https://img.shields.io/badge/Agent-Agnostic-blueviolet)](https://skills.sh)
-[![Version](https://img.shields.io/badge/Version-1.0.0-blue.svg)](CHANGELOG.md)
-[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux-lightgrey.svg)](#兼容性)
+[![Version](https://img.shields.io/badge/Version-1.0.1-blue.svg)](CHANGELOG.md)
+[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg)](#兼容性)
+[![CI](https://img.shields.io/github/actions/workflow/status/AlexPlum405/skills/validate-hooks.yml?label=hooks%20CI)](https://github.com/AlexPlum405/skills/actions/workflows/validate-hooks.yml)
 
-[特性](#为什么使用) • [安装](#安装) • [详细文档](SKILL.md) • [版本对比](COMPARISON.md)
+[特性](#为什么使用) • [安装](#安装) • [详细文档](SKILL.md)
 
 </div>
 
@@ -19,189 +19,159 @@
 
 ## 这是什么
 
-一个 hooks 配置包，让你的 AI 助手自动识别每个问题的专家角色，并在每次回答开头显示。
+一套 Claude Code hooks 配置：在每次回答前，让 AI **先分析问题所属领域 → 构造最贴切的专家角色 → 带着这个角色去回答**，而不是边答边贴标签。
 
-**不是可调用的 skill** —— 这是一个文档和配置包。安装一次，自动生效。
+> **这不是一个可调用的 skill**，是一份装到 `settings.json` 里自动生效的配置。装一次，每轮都跑。
 
 **示例：**
 
 ```
 用户：这个 Rust lifetime 错误怎么修？
 AI：**角色：Rust Lifetime Expert**
-
-这个错误的原因是...
+   编译器报错是因为……（已以 lifetime 专家视角在回答）
 ```
 
 ```
-用户：这个 SQL 查询怎么优化？
-AI：**角色：数据库性能专家**
-
-首先检查执行计划...
+用户：那 PostgreSQL 里这个查询怎么优化？
+AI：**角色：PostgreSQL Query Optimizer**
+   先看执行计划……（领域切换，角色自动重选）
 ```
 
 ## 为什么使用
 
-- ✅ **更好的上下文** — AI 针对特定领域定制回答
-- ✅ **一致性** — 在相关问题中保持同一角色
-- ✅ **透明度** — 始终知道 AI 从什么角度回答
-- ✅ **面向未来** — 使用动态角色生成，适用于任何技术栈
-- ✅ **跨平台** — 适用于 Claude Code、Cursor 等 AI 助手
-
-## 核心特性：动态角色生成
-
-与使用固定角色库的传统方法不同，auto-role-router 使用**动态角色生成**：
-
-- ✅ 适用于**任何技术**，包括尚不存在的框架
-- ✅ 无覆盖盲区 —— 只要你能说出名字，AI 就能扮演该角色
-- ✅ 根据问题的具体程度自动调整粒度
-
-**动态生成角色的示例：**
-- 新运行时？→ `Bun Runtime Expert`
-- 具体问题？→ `Rust Lifetime Expert`
-- 宽泛问题？→ `Rust Expert`
-
-## 安装
-
-### 两个版本可选
-
-- **基础版（推荐）** —— 简单的角色声明
-- **方案 A 版（高级）** —— 预激活模式，首次回答质量更好
-
-详细对比见 [COMPARISON.md](COMPARISON.md)。
-
-### 方式 1：快速安装（基础版）
-
-```bash
-# 备份现有配置
-cp ~/.claude/settings.json ~/.claude/settings.json.backup
-
-# 一键安装（需要 curl 和 jq）
-curl -sL https://raw.githubusercontent.com/AlexPlum405/skills/main/auto-role-router/install.sh | bash
-```
-
-### 方式 2：安装方案 A 版本
-
-```bash
-# 备份现有配置
-cp ~/.claude/settings.json ~/.claude/settings.json.backup
-
-# 克隆仓库
-git clone https://github.com/AlexPlum405/skills.git
-cd skills/auto-role-router
-
-# 合并方案 A hooks
-jq -s '.[0] * .[1]' ~/.claude/settings.json hooks-config-plan-a.json > ~/.claude/settings.json.tmp
-mv ~/.claude/settings.json.tmp ~/.claude/settings.json
-
-echo "✅ 已安装，重启 Claude Code 生效"
-```
-
-### 方式 3：手动安装
-
-1. **克隆仓库：**
-   ```bash
-   git clone https://github.com/AlexPlum405/skills.git
-   cd skills/auto-role-router
-   ```
-
-2. **选择版本：**
-   - 基础版：`hooks-config.json`
-   - 方案 A：`hooks-config-plan-a.json`
-
-3. **复制 hooks 配置：** 打开 `~/.claude/settings.json`，合并你选择的配置文件内容。
-
-4. **重启助手：** 重启 Claude Code（或你的 AI 助手）使 hooks 生效。
-
-完整安装指南详见 [SKILL.md](SKILL.md)。
+- ✅ **预激活而不是事后贴标签** —— 回答第一个 token 就已经在专家模式
+- ✅ **动态角色生成** —— 无需维护角色库，新框架自动适配
+- ✅ **跨领域自动切换** —— 多轮对话中领域变了，角色跟着换
+- ✅ **粒度自适应** —— 问题越具体角色越窄，问题宽泛角色就粗
+- ✅ **跨平台** —— macOS / Linux / Windows 都有对应的安装脚本
 
 ## 工作原理
 
-Auto-role-router 向你的 AI 助手注入 hooks，在每次回答前执行：
+装好后，每条用户消息进入 Claude Code 前会触发 `UserPromptSubmit` hook，向 system context 注入一段强制流程：
 
-1. 从问题中**提取关键词**（技术栈、框架、工具）
-2. **确定粒度**（具体问题 → 细粒度角色，宽泛问题 → 粗粒度角色）
-3. 使用公式**构造角色名**：`[技术] + [专业方向] + Expert/Specialist`
-4. 在第一行用适当语言**声明角色**
+1. 从问题里**提取技术关键词**（语言、框架、工具、概念）
+2. **判断粒度**：具体问题 → 细角色；宽泛问题 → 粗角色
+3. 用公式**构造角色**：`[技术] + [专业方向] + Expert/Specialist`
+4. **先进入角色再生成**输出，第一行声明 `**角色：XXX**`
 
 详细方法论见 [SKILL.md](SKILL.md)。
 
+## 安装
+
+> 安装脚本会先把你现有的 `~/.claude/settings.json` 备份到带时间戳的 `.backup` 文件，再合并 hooks。支持 `--dry-run`，想先看改动再落盘。
+
+### macOS / Linux
+
+```bash
+curl -sSL https://raw.githubusercontent.com/AlexPlum405/skills/main/auto-role-router/install.sh | bash
+```
+
+或者先 clone 再本地跑：
+
+```bash
+git clone https://github.com/AlexPlum405/skills.git
+cd skills/auto-role-router
+./install.sh --dry-run    # 先看会改什么
+./install.sh              # 确认无误再装
+```
+
+### Windows（PowerShell）
+
+```powershell
+# 需要 PowerShell 5.1+（Windows 10/11 自带）
+irm https://raw.githubusercontent.com/AlexPlum405/skills/main/auto-role-router/install.ps1 | iex
+```
+
+或 clone 后本地跑：
+
+```powershell
+git clone https://github.com/AlexPlum405/skills.git
+cd skills\auto-role-router
+.\install.ps1 -DryRun
+.\install.ps1
+```
+
+### 高级选项
+
+| 场景 | macOS/Linux | Windows |
+|------|-------------|---------|
+| 预览改动不落盘 | `./install.sh --dry-run` | `.\install.ps1 -DryRun` |
+| 彻底卸载（保留别人的 hooks） | `./install.sh --uninstall` | `.\install.ps1 -Uninstall` |
+| 使用更轻量的 legacy 配置 | `./install.sh --legacy` | `.\install.ps1 -Legacy` |
+
+> `--legacy` 对应更短的 hook payload，只提醒 AI 声明角色，不强制"预激活"。效果差异见 [COMPARISON.md](COMPARISON.md)。新用户不推荐。
+
+### 卸载
+
+```bash
+# macOS/Linux
+./install.sh --uninstall
+
+# Windows
+.\install.ps1 -Uninstall
+```
+
+卸载脚本会用命令内容里的 `auto-role-router` 标识精准识别，只删自己的 hook entry，保留你安装的其他 hooks。
+
 ## 示例对话
 
-**具体技术问题：**
+**具体技术问题（细粒度角色）：**
 ```
 用户：我的 Rust 异步函数因为 lifetime 问题编译不过
 AI：**角色：Rust Lifetime Expert**
-
-编译器报错是因为...
+   编译器报错是因为……
 ```
 
-**新技术（不在任何预定义列表中）：**
+**新技术（动态生成，无需预定义列表）：**
 ```
 用户：怎么配置 Bun 内置的测试运行器？
 AI：**角色：Bun Runtime Expert**
-
-Bun 的测试运行器可以这样配置...
+   Bun 的测试运行器可以这样配置……
 ```
 
 **领域切换：**
 ```
 用户：这个 PostgreSQL 查询怎么优化？
 AI：**角色：PostgreSQL Query Optimizer**
-
-先看执行计划...
+   先看执行计划……
 
 用户：那用 Redis 怎么缓存结果？
 AI：**角色：Redis Caching Specialist**
-
-这个场景我建议...
+   这个场景我建议……
 ```
 
 ## 兼容性
 
-| AI 助手 | 状态 | 说明 |
-|--------|------|------|
-| Claude Code | ✅ 已测试 | 完整测试通过 |
-| Cursor | ⚠️ 理论兼容 | 如果支持 hooks 应该可用 |
-| 其他助手 | ⚠️ 视情况 | 需确认助手是否支持 hooks |
+| AI 助手 | 状态 |
+|--------|------|
+| Claude Code（CLI/IDE 插件） | ✅ 完整测试并在 CI 中持续验证 |
+
+> **说明：** 其他助手（Cursor、Codex 等）的 hook 机制各不相同，这个仓库**没有验证过**。如果你测过兼容性并愿意分享步骤，欢迎提 PR。
 
 ## 故障排除
 
-### AI 不声明角色
+### 每轮都被拦截报 `unexpected EOF`
 
-1. 检查 hooks 安装：`cat ~/.claude/settings.json | grep "auto-role-router"`
-2. 重启你的 AI 助手
-3. 验证 JSON 语法：`jq . ~/.claude/settings.json`
+说明 hook 命令里存在英文撇号（`'`），bash 会把它当作单引号闭合导致解析失败。打开 `~/.claude/settings.json`，把 `hasn't` / `don't` / `it's` / `expert's` 改写成 `has not` / `do not` / `it is` / `the ... of the expert`，然后重启 Claude Code。
+
+本仓库的 CI 会自动拦截这类问题，所以只在你自己手改 settings 时才可能踩到。
+
+### AI 没声明角色
+
+1. `jq .hooks ~/.claude/settings.json` 看 hooks 是否装进去了
+2. 重启 Claude Code（hooks 是在 session 启动时加载的）
+3. 如果 JSON 语法坏了：`jq . ~/.claude/settings.json` 会直接报错行号
 
 ### 角色太泛化
 
-在问题中提供更具体的细节：
-- ❌ "Rust 怎么用？"
-- ✅ "我的 Rust 异步函数里的生命周期错误怎么修？"
-
-## 卸载
-
-1. 打开 `~/.claude/settings.json`
-2. 删除与 auto-role-router 相关的 `SessionStart` 和 `UserPromptSubmit` hooks
-3. 重启你的 AI 助手
+问题给得越具体，角色越贴合：
+- ❌ "Rust 怎么用？" → `Rust Expert`
+- ✅ "我的 Rust 异步函数里的生命周期错误怎么修？" → `Rust Lifetime Expert`
 
 ## 贡献
 
-欢迎贡献：
-- 其他 AI 助手的安装脚本
-- 改进的角色构造逻辑
-- 额外的语言支持
-- 更好的示例
-
-详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+欢迎 PR：其他 AI 助手的兼容性验证、更精准的角色构造策略、新语言的文档翻译。详见仓库根目录的 [CONTRIBUTING.md](../CONTRIBUTING.md)。
 
 ## 许可证
 
-MIT License —— 可自由使用、修改和分发。
-
----
-
-<div align="center">
-
-**为更好的 AI-人类协作而制作**
-
-</div>
+MIT License

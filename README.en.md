@@ -2,66 +2,68 @@
 
 <div align="center">
 
-# Alex's Skills Collection
+# Alex's Claude Code Config
 
-> **Custom skills and configurations for AI coding assistants**
+> **The Claude Code hooks and skills I actually use, open-sourced for anyone with the same needs**
 
-[![GitHub Stars](https://img.shields.io/github/stars/AlexPlum405/skills?style=social)](https://github.com/AlexPlum405/skills/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/AlexPlum405/skills?style=social)](https://github.com/AlexPlum405/skills/network/members)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Skills Count](https://img.shields.io/badge/Skills-1-blue.svg)](#available-skills)
-[![Agent Agnostic](https://img.shields.io/badge/Agent-Agnostic-blueviolet)](https://skills.sh)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Skills](https://img.shields.io/badge/skills-1-blue.svg)](#available-skills)
+[![CI](https://img.shields.io/github/actions/workflow/status/AlexPlum405/skills/validate-hooks.yml?label=hooks%20CI)](https://github.com/AlexPlum405/skills/actions/workflows/validate-hooks.yml)
+[![Platform](https://img.shields.io/badge/macOS%20%7C%20Linux%20%7C%20Windows-supported-lightgrey.svg)](#cross-platform)
 
 </div>
 
 ---
 
-This repository contains custom skills and configurations I built for AI coding assistants like Claude Code, Cursor, and others. Each skill lives in its own directory with dedicated docs and one-command installation.
+This is my personal tooling repo — not an actively maintained public project. Use the code however you like. Issues and PRs **might** get attention — see [CONTRIBUTING.md](CONTRIBUTING.md) for what to expect.
 
 ## Available Skills
 
 ### [auto-role-router](./auto-role-router)
 
-Automatically assigns expert roles to your AI assistant based on question domain. Uses **dynamic role generation** to work with any technology stack — including frameworks that don't exist yet.
+Two Claude Code hooks that, on every turn, make the agent **analyze the question's domain → construct the most specific expert role → generate the response from that role**. Not labeling after the fact — actually in the role from the first token.
 
-**Features:**
-- ✅ Dynamic role generation (no fixed role library to maintain)
-- ✅ Two versions: Basic and Pre-activation mode (Plan A)
-- ✅ Cross-platform compatible
-- ✅ Future-proof (adapts to new technologies automatically)
-
-**Quick install:**
 ```bash
-curl -sL https://raw.githubusercontent.com/AlexPlum405/skills/main/auto-role-router/install.sh | bash
+# macOS / Linux
+curl -sSL https://raw.githubusercontent.com/AlexPlum405/skills/main/auto-role-router/install.sh | bash
+
+# Windows
+irm https://raw.githubusercontent.com/AlexPlum405/skills/main/auto-role-router/install.ps1 | iex
 ```
 
-See [auto-role-router/README.md](./auto-role-router/README.md) for details.
+Details in [auto-role-router/README.en.md](./auto-role-router/README.en.md).
 
----
+## Cross-platform
 
-## Repository Structure
+Every skill is smoke-tested in CI on:
+
+| Platform | Installer |
+|----------|-----------|
+| macOS | `install.sh` |
+| Linux (Ubuntu) | `install.sh` |
+| Windows 10/11 (PowerShell 5.1+) | `install.ps1` |
+
+## Repository structure
 
 ```
 skills/
 ├── README.md              # Repo overview (Chinese)
 ├── README.en.md           # Repo overview (English)
-├── SKILL_TEMPLATE.md      # Template for new skills
-└── skill-name/            # One directory per skill
-    ├── SKILL.md           # Detailed documentation
-    ├── README.md          # Quick start (Chinese)
-    ├── README.en.md       # Quick start (English)
-    ├── install.sh         # Installation script
-    └── ...
+├── SKILL_TEMPLATE.md      # Template for new skills (with hook-authoring gotchas)
+├── CONTRIBUTING.md        # How to contribute
+├── .github/workflows/     # CI: JSON validation + hook exec + 3-platform install smoke
+└── skill-name/
+    ├── SKILL.md
+    ├── README.md
+    ├── README.en.md
+    ├── install.sh
+    ├── install.ps1
+    └── hooks-config*.json
 ```
-
-## Contributing
-
-This is a personal collection, but suggestions and improvements are welcome. If you'd like to add a new skill, refer to [SKILL_TEMPLATE.md](./SKILL_TEMPLATE.md).
 
 ## License
 
-Each skill may have its own license — check individual subdirectories. The repository as a whole uses MIT.
+MIT
 
 ---
 
